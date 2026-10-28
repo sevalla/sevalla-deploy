@@ -1,74 +1,25 @@
-const core = require('@actions/core')
+import * as core from '@actions/core'
+import { API_URL, request, waitForDeployment } from '../sevalla.js'
 
-const initDeployment = async () => {
-  try {
-    const sevallaToken = core.getInput('sevalla-token')
-    const staticSiteId = core.getInput('static-site-id')
-    const branch = core.getInput('branch')
+export const deployStaticSite = async () => {
+  const token = core.getInput('sevalla-token', { required: true })
+  const staticSiteId = core.getInput('static-site-id', { required: true })
+  const waitForFinish = core.getBooleanInput('wait-for-finish')
 
-    const res = await fetch(`https://api.sevalla.com/v3/static-sites/${staticSiteId}/deployments`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${sevallaToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ branch }),
-    })
-
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status} - ${res.statusText}`)
-    }
-
-    const data = await res.json()
-    return data?.id
-  } catch (err) {
-    core.setFailed(err.message)
-  }
-}
-
-const maxRetries = 1000
-const pollStatus = async (staticSiteId, deploymentId, retry = 0) => {
-  await new Promise((res) => setTimeout(res, 5000))
-  if (retry >= maxRetries) {
-    throw new Error('Max retries reached while polling deployment status')
-  }
-
-  const sevallaToken = core.getInput('sevalla-token')
-  const resp = await fetch(`https://api.sevalla.com/v3/static-sites/${staticSiteId}/deployments/${deploymentId}`, {
-    headers: { Authorization: `Bearer ${sevallaToken}` },
+  const data = await request(`${API_URL}/static-sites/${staticSiteId}/deployments`, {
+    token,
+    method: 'POST',
+    body: { branch: core.getInput('branch') || undefined },
   })
-  if (!resp.ok) {
-    core.info(`Failed to fetch deployment status (id: ${deploymentId}) - ${resp.status}; ${resp.statusText}`)
-    return pollStatus(staticSiteId, deploymentId, retry + 1)
-  }
-  const data = await resp.json()
-  const status = data?.status
+  const deploymentId = data?.id
+  if (!deploymentId) throw new Error('Sevalla API did not return a deployment ID')
+  core.setOutput('deployment-id', deploymentId)
+  core.info(`Deployment (id: ${deploymentId}) triggered successfully!`)
 
-  core.info(`Deployment status: ${status}`)
-  if (['success', 'failed', 'cancelled'].includes(status)) {
-    if (status !== 'success') {
-      throw new Error(`Deployment failed: status is ${status}`)
-    }
-  } else {
-    return pollStatus(staticSiteId, deploymentId, retry + 1)
-  }
-}
-
-module.exports.deployStaticSite = async () => {
-  const waitForFinish = core.getInput('wait-for-finish') !== 'false'
-  const staticSiteId = core.getInput('static-site-id')
-
-  const deploymentId = await initDeployment()
-  if (deploymentId) {
-    core.setOutput('deployment-id', deploymentId)
-    core.info(`Deployment (id: ${deploymentId}) triggered successfully!`)
-  }
-
-  if (waitForFinish && deploymentId) {
-    try {
-      await pollStatus(staticSiteId, deploymentId)
-    } catch (e) {
-      core.setFailed(e.message)
-    }
+  // A static site deployment is skipped when nothing changed, so the site is already up to date
+  if (waitForFinish) {
+    await waitForDeployment(`/static-sites/${staticSiteId}/deployments/${deploymentId}`, token, {
+      okStatuses: ['success', 'skipped'],
+    })
   }
 }

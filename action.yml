@@ -34,15 +34,20 @@ inputs:
     required: false
     default: 'false'
   wait-for-finish:
-    description: 'Wait for deployment to finish (true/false)'
+    description: 'Wait for deployment to finish (true/false). Needs sevalla-token.'
     required: false
     default: 'false'
   deploy-hook-url:
     description: 'Sevalla Deploy Hook URL (alternative to token/app-id)'
     required: false
+outputs:
+  deployment-id:
+    description: 'Deployment ID (deploy-app, deploy-static-site)'
+  deployment-ids:
+    description: 'JSON array of deployment IDs (promote-app)'
 runs:
-  using: 'node20'
-  main: 'src/index.js'
+  using: 'node24'
+  main: 'dist/index.cjs'
 branding:
   icon: 'upload-cloud'
   color: 'gray-dark'

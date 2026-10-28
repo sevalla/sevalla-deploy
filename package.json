@@ -2,18 +2,24 @@
   "name": "sevalla-github-action",
   "version": "2.0.0",
   "description": "A GitHub Action to deploy and promote Sevalla apps and static sites.",
-  "main": "src/index.js",
   "scripts": {
-    "test": "node --test --experimental-test-coverage --test-coverage-lines=100 --test-coverage-exclude=\"test/**/*\""
+    "test": "node --test --experimental-test-coverage --test-coverage-lines=100 --test-coverage-include=\"src/**\" \"test/*.test.js\"",
+    "build": "esbuild src/index.js --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.cjs",
+    "lint": "eslint . && prettier --check src test eslint.config.mjs"
   },
   "dependencies": {
-    "@actions/core": "^1.11.1"
+    "@actions/core": "^3.0.1"
   },
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "private": true,
   "devDependencies": {
-    "@eslint/js": "^9.38.0",
-    "eslint-config-prettier": "^10.1.5",
-    "eslint-plugin-prettier": "^5.5.4",
-    "prettier": "^3.5.3",
-    "semantic-release": "^25.0.1"
+    "@eslint/js": "^10.0.1",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.13.0",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10"
   }
 }

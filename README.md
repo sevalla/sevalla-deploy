@@ -1,31 +1,34 @@
 <div align="center">
 
+<img src="https://assets.sevalla.com/brand/logo/svg/sevalla-mark-color.svg" alt="" width="64" height="64" />
+
 # Sevalla GitHub Action
 
 **Deploy and promote Sevalla apps and static sites from GitHub Actions.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
-[![Sevalla API](https://img.shields.io/badge/Sevalla_API-v3-FF6723)](https://api-docs.sevalla.com)
+[![Release](https://img.shields.io/github/v/release/sevalla/sevalla-deploy?color=57534e)](https://github.com/sevalla/sevalla-deploy/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-57534e)](LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-20+-57534e?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Sevalla API](https://img.shields.io/badge/Sevalla_API-v3-57534e)](https://api-docs.sevalla.com)
+
+[Docs](https://docs.sevalla.com/developer-tools/github-actions) · [Sevalla](https://sevalla.com)
 
 </div>
 
----
+A GitHub Action that deploys applications and static sites on [Sevalla](https://sevalla.com), and promotes applications from one pipeline stage to the next. It deploys with an API key or an application's deploy hook, and can wait until the deployment finishes.
 
-A GitHub Action that triggers deployments and promotions on [Sevalla](https://sevalla.com) infrastructure. Supports application deployments (via API token or deploy hook), static site deployments, and pipeline promotions with optional polling until completion.
-
-## Quick Start
+## Quick start
 
 ```yaml
 - uses: sevalla/sevalla-deploy@v2.0.0
   with:
     action: deploy-app
     sevalla-token: ${{ secrets.SEVALLA_TOKEN }}
-    app-id: your-app-id
+    app-id: <app-id>
     wait-for-finish: true
 ```
 
-Get your API key from [app.sevalla.com/api-keys](https://app.sevalla.com/api-keys).
+Create an API key under **Tools** > **API keys** in the [Sevalla dashboard](https://app.sevalla.com/api-keys), and store it as the `SEVALLA_TOKEN` secret.
 
 ## Inputs
 
@@ -53,75 +56,9 @@ Get your API key from [app.sevalla.com/api-keys](https://app.sevalla.com/api-key
 | `deployment-id` | Deployment ID (for `deploy-app` and `deploy-static-site`) |
 | `deployment-ids` | Deployment IDs (for `promote-app`) |
 
-## Examples
+## How it works
 
-### Deploy an App
-
-```yaml
-jobs:
-  deploy-app:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: sevalla/sevalla-deploy@v2.0.0
-        with:
-          action: deploy-app
-          sevalla-token: ${{ secrets.SEVALLA_TOKEN }}
-          app-id: your-app-id
-          branch: main
-          wait-for-finish: true
-```
-
-### Deploy via Deploy Hook
-
-```yaml
-jobs:
-  deploy-app:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: sevalla/sevalla-deploy@v2.0.0
-        with:
-          action: deploy-app
-          sevalla-token: ${{ secrets.SEVALLA_TOKEN }}
-          deploy-hook-url: https://api.sevalla.com/hooks/xyz
-          wait-for-finish: true
-```
-
-### Promote an App
-
-```yaml
-jobs:
-  promote-app:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: sevalla/sevalla-deploy@v2.0.0
-        with:
-          action: promote-app
-          sevalla-token: ${{ secrets.SEVALLA_TOKEN }}
-          pipeline-id: your-pipeline-id
-          source-app-id: staging-app-id
-          target-app-ids: production-app-id
-          wait-for-finish: true
-```
-
-### Deploy a Static Site
-
-```yaml
-jobs:
-  deploy-static-site:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: sevalla/sevalla-deploy@v2.0.0
-        with:
-          action: deploy-static-site
-          sevalla-token: ${{ secrets.SEVALLA_TOKEN }}
-          static-site-id: your-static-site-id
-          branch: main
-          wait-for-finish: true
-```
-
-## How It Works
-
-```
+```text
 GitHub Actions Workflow
        │
        │  action: deploy-app | promote-app | deploy-static-site
@@ -139,6 +76,72 @@ GitHub Actions Workflow
 
 When `wait-for-finish` is enabled, the action polls every 5 seconds until the deployment reaches a terminal status (`success`, `failed`, `cancelled`, or `skipped`). The action fails if the deployment doesn't succeed.
 
+## Examples
+
+### Deploy an app
+
+```yaml
+jobs:
+  deploy-app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: sevalla/sevalla-deploy@v2.0.0
+        with:
+          action: deploy-app
+          sevalla-token: ${{ secrets.SEVALLA_TOKEN }}
+          app-id: <app-id>
+          branch: main
+          wait-for-finish: true
+```
+
+### Deploy with a deploy hook
+
+```yaml
+jobs:
+  deploy-app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: sevalla/sevalla-deploy@v2.0.0
+        with:
+          action: deploy-app
+          sevalla-token: ${{ secrets.SEVALLA_TOKEN }}
+          deploy-hook-url: ${{ secrets.SEVALLA_DEPLOY_HOOK_URL }}
+          wait-for-finish: true
+```
+
+### Promote an app
+
+```yaml
+jobs:
+  promote-app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: sevalla/sevalla-deploy@v2.0.0
+        with:
+          action: promote-app
+          sevalla-token: ${{ secrets.SEVALLA_TOKEN }}
+          pipeline-id: <pipeline-id>
+          source-app-id: <staging-app-id>
+          target-app-ids: <production-app-id>
+          wait-for-finish: true
+```
+
+### Deploy a static site
+
+```yaml
+jobs:
+  deploy-static-site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: sevalla/sevalla-deploy@v2.0.0
+        with:
+          action: deploy-static-site
+          sevalla-token: ${{ secrets.SEVALLA_TOKEN }}
+          static-site-id: <static-site-id>
+          branch: main
+          wait-for-finish: true
+```
+
 ## License
 
-[MIT](LICENSE)
+MIT. See [LICENSE](LICENSE).

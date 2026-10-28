@@ -17,7 +17,7 @@ A GitHub Action that triggers deployments and promotions on [Sevalla](https://se
 ## Quick Start
 
 ```yaml
-- uses: sevalla-hosting/sevalla-deploy@v2.0.0
+- uses: sevalla/sevalla-deploy@v2.0.0
   with:
     action: deploy-app
     sevalla-token: ${{ secrets.SEVALLA_TOKEN }}
@@ -62,7 +62,7 @@ jobs:
   deploy-app:
     runs-on: ubuntu-latest
     steps:
-      - uses: sevalla-hosting/sevalla-deploy@v2.0.0
+      - uses: sevalla/sevalla-deploy@v2.0.0
         with:
           action: deploy-app
           sevalla-token: ${{ secrets.SEVALLA_TOKEN }}
@@ -78,7 +78,7 @@ jobs:
   deploy-app:
     runs-on: ubuntu-latest
     steps:
-      - uses: sevalla-hosting/sevalla-deploy@v2.0.0
+      - uses: sevalla/sevalla-deploy@v2.0.0
         with:
           action: deploy-app
           sevalla-token: ${{ secrets.SEVALLA_TOKEN }}
@@ -93,7 +93,7 @@ jobs:
   promote-app:
     runs-on: ubuntu-latest
     steps:
-      - uses: sevalla-hosting/sevalla-deploy@v2.0.0
+      - uses: sevalla/sevalla-deploy@v2.0.0
         with:
           action: promote-app
           sevalla-token: ${{ secrets.SEVALLA_TOKEN }}
@@ -110,7 +110,7 @@ jobs:
   deploy-static-site:
     runs-on: ubuntu-latest
     steps:
-      - uses: sevalla-hosting/sevalla-deploy@v2.0.0
+      - uses: sevalla/sevalla-deploy@v2.0.0
         with:
           action: deploy-static-site
           sevalla-token: ${{ secrets.SEVALLA_TOKEN }}

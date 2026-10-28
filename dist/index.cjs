@@ -19699,11 +19699,11 @@ var getStatus = async (path, token) => {
     warning(`Could not fetch deployment status, retrying: ${err.message}`);
   }
 };
-var waitForDeployment = async (path, token, { intervalMs = 5e3, maxAttempts = 1e3 } = {}) => {
+var waitForDeployment = async (path, token, { intervalMs = 5e3, maxAttempts = 1e3, okStatuses = ["success"] } = {}) => {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const status = await getStatus(path, token);
     if (status) info(`${path}: ${status}`);
-    if (status === "success") return;
+    if (okStatuses.includes(status)) return;
     if (TERMINAL_STATUSES.includes(status)) throw new Error(`Deployment ${path} ended with status: ${status}`);
     await (0, import_promises.setTimeout)(intervalMs);
   }
@@ -19786,7 +19786,11 @@ var deployStaticSite = async () => {
   if (!deploymentId) throw new Error("Sevalla API did not return a deployment ID");
   setOutput("deployment-id", deploymentId);
   info(`Deployment (id: ${deploymentId}) triggered successfully!`);
-  if (waitForFinish) await waitForDeployment(`/static-sites/${staticSiteId}/deployments/${deploymentId}`, token);
+  if (waitForFinish) {
+    await waitForDeployment(`/static-sites/${staticSiteId}/deployments/${deploymentId}`, token, {
+      okStatuses: ["success", "skipped"]
+    });
+  }
 };
 
 // src/index.js

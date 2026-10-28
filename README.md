@@ -74,7 +74,7 @@ GitHub Actions Workflow
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-When `wait-for-finish` is enabled, the action polls every 5 seconds until the deployment reaches a terminal status (`success`, `failed`, `cancelled`, or `skipped`). The action fails if the deployment doesn't succeed.
+When `wait-for-finish` is enabled, the action polls every 5 seconds until the deployment reaches a terminal status (`success`, `failed`, `cancelled`, or `skipped`). The action fails if the deployment doesn't succeed. A static site deployment that Sevalla skips because nothing changed counts as a success.
 
 ## Examples
 

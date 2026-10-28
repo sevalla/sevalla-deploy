@@ -40,11 +40,15 @@ const getStatus = async (path, token) => {
   }
 }
 
-export const waitForDeployment = async (path, token, { intervalMs = 5000, maxAttempts = 1000 } = {}) => {
+export const waitForDeployment = async (
+  path,
+  token,
+  { intervalMs = 5000, maxAttempts = 1000, okStatuses = ['success'] } = {},
+) => {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const status = await getStatus(path, token)
     if (status) core.info(`${path}: ${status}`)
-    if (status === 'success') return
+    if (okStatuses.includes(status)) return
     if (TERMINAL_STATUSES.includes(status)) throw new Error(`Deployment ${path} ended with status: ${status}`)
     await sleep(intervalMs)
   }

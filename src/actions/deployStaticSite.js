@@ -16,5 +16,10 @@ export const deployStaticSite = async () => {
   core.setOutput('deployment-id', deploymentId)
   core.info(`Deployment (id: ${deploymentId}) triggered successfully!`)
 
-  if (waitForFinish) await waitForDeployment(`/static-sites/${staticSiteId}/deployments/${deploymentId}`, token)
+  // A static site deployment is skipped when nothing changed, so the site is already up to date
+  if (waitForFinish) {
+    await waitForDeployment(`/static-sites/${staticSiteId}/deployments/${deploymentId}`, token, {
+      okStatuses: ['success', 'skipped'],
+    })
+  }
 }

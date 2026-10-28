@@ -22,6 +22,18 @@ test('deploys a branch and waits for it', async () => {
   assert.equal(fetchCall(fetch, 1).url, 'https://api.sevalla.com/v3/static-sites/s1/deployments/d1')
 })
 
+test('counts a skipped deployment (nothing changed) as done', async () => {
+  setInputs({ 'sevalla-token': 'tok', 'static-site-id': 's1', 'wait-for-finish': 'true' })
+  mockFetch([201, { id: 'd1' }], [200, { status: 'skipped' }])
+  await deployStaticSite()
+})
+
+test('fails when the deployment fails', async () => {
+  setInputs({ 'sevalla-token': 'tok', 'static-site-id': 's1', 'wait-for-finish': 'true' })
+  mockFetch([201, { id: 'd1' }], [200, { status: 'failed' }])
+  await assert.rejects(deployStaticSite(), /ended with status: failed/)
+})
+
 test('requires a token and static-site-id', async () => {
   setInputs({ 'sevalla-token': 'tok' })
   await assert.rejects(deployStaticSite(), /Input required and not supplied: static-site-id/)

@@ -1,11 +1,13 @@
-const core = require('@actions/core')
-const { deployApp } = require('./actions/deployApp')
-const { promoteApp } = require('./actions/promoteApp')
-const { deployStaticSite } = require('./actions/deployStaticSite')
+import * as core from '@actions/core'
+import { deployApp } from './actions/deployApp.js'
+import { promoteApp } from './actions/promoteApp.js'
+import { deployStaticSite } from './actions/deployStaticSite.js'
 
-const run = async () => {
+export const run = async () => {
   try {
-    const action = core.getInput('action')
+    const action = core.getInput('action', { required: true })
+    const token = core.getInput('sevalla-token')
+    if (token) core.setSecret(token)
 
     if (action === 'deploy-app') {
       await deployApp()
@@ -14,7 +16,7 @@ const run = async () => {
     } else if (action === 'deploy-static-site') {
       await deployStaticSite()
     } else {
-      core.setFailed(`Unknown action: ${action}`)
+      throw new Error(`Unknown action: ${action}. Use deploy-app, promote-app or deploy-static-site.`)
     }
   } catch (error) {
     core.setFailed(error.message)

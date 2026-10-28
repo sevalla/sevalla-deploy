@@ -1,18 +1,9 @@
-import eslint from '@eslint/js'
-import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
+import js from '@eslint/js'
+import { defineConfig } from 'eslint/config'
+import globals from 'globals'
 
-export default eslint.config(
-  {
-    ignores: [
-      'node_modules/**/*',
-      'eslint.config.mjs',
-    ],
-  },
-  eslint.configs.recommended,
-  eslintPluginPrettierRecommended,
-  {
-    rules: {
-      semi: ['error', 'never'],
-    },
-  },
-)
+export default defineConfig([
+  { ignores: ['dist/', 'coverage/'] },
+  js.configs.recommended,
+  { languageOptions: { globals: globals.node } },
+])

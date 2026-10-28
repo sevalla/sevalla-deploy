@@ -8,7 +8,7 @@
 
 [![Release](https://img.shields.io/github/v/release/sevalla/sevalla-deploy?color=57534e)](https://github.com/sevalla/sevalla-deploy/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-57534e)](LICENSE)
-[![Node.js](https://img.shields.io/badge/Node.js-20+-57534e?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-24-57534e?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Sevalla API](https://img.shields.io/badge/Sevalla_API-v3-57534e)](https://api-docs.sevalla.com)
 
 [Docs](https://docs.sevalla.com/developer-tools/github-actions) · [Sevalla](https://sevalla.com)
@@ -47,14 +47,14 @@ Create an API key under **Tools** > **API keys** in the [Sevalla dashboard](http
 | `wait-for-finish` | — | Poll until deployment completes (`true`/`false`, default `false`) |
 | `deploy-hook-url` | — | Deploy hook URL (alternative to `sevalla-token` + `app-id`) |
 
-*Not required when using `deploy-hook-url` without `wait-for-finish`.
+*Not required when using `deploy-hook-url` without `wait-for-finish`. With a deploy hook, `app-id` is read from the hook URL.
 
 ## Outputs
 
 | Name | Description |
 | --- | --- |
 | `deployment-id` | Deployment ID (for `deploy-app` and `deploy-static-site`) |
-| `deployment-ids` | Deployment IDs (for `promote-app`) |
+| `deployment-ids` | JSON array of deployment IDs (for `promote-app`) |
 
 ## How it works
 

@@ -1,93 +1,45 @@
-const core = require('@actions/core')
+import * as core from '@actions/core'
+import { API_URL, request, waitForDeployment } from '../sevalla.js'
 
-const initDeployment = async () => {
-  const sevallaToken = core.getInput('sevalla-token')
-  const appId = core.getInput('app-id')
-  const branch = core.getInput('branch')
-  const dockerImage = core.getInput('docker-image')
-  const isRestart = core.getInput('is-restart') === 'true'
-  const deployHookUrl = core.getInput('deploy-hook-url')
+// Deploy hook URLs look like https://hook.sevalla.com/apps/<app-id>/deploy/<secret>
+const appIdFromHook = (url) => url.match(/\/apps\/([^/]+)\/deploy\//)?.[1]
 
-  try {
-    if (deployHookUrl) {
-      const resp = await fetch(deployHookUrl, { method: 'POST' })
-      if (!resp.ok) {
-        throw new Error(`Deploy hook request failed: ${resp.status}`)
-      }
-      const data = await resp.json()
-      return data?.deployment?.id
-    } else {
-      if (!sevallaToken || !appId) throw new Error('sevalla-token and app-id are required')
-      const params = {
-        branch: branch ? branch : undefined,
-        is_restart: isRestart !== undefined ? isRestart : undefined,
-        docker_image: dockerImage ? dockerImage : undefined,
-      }
-      const resp = await fetch(`https://api.sevalla.com/v3/applications/${appId}/deployments`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${sevallaToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(params),
-      })
-      if (!resp.ok) {
-        throw new Error(`Deployment request failed: ${resp.status} - ${resp.statusText}`)
-      }
-      const data = await resp.json()
-      return data.id
-    }
-  } catch (err) {
-    core.setFailed(err.message)
+const triggerDeployment = async (token, appId, hookUrl) => {
+  if (hookUrl) {
+    const data = await request(hookUrl, { method: 'POST' })
+    return data?.deployment?.id
   }
-}
-
-const maxRetries = 1000
-const pollStatus = async (appId, deploymentId, retry = 0) => {
-  await new Promise((res) => setTimeout(res, 5000))
-  if (retry >= maxRetries) {
-    throw new Error('Max retries reached while polling deployment status')
-  }
-  const sevallaToken = core.getInput('sevalla-token')
-  const resp = await fetch(`https://api.sevalla.com/v3/applications/${appId}/deployments/${deploymentId}`, {
-    headers: { Authorization: `Bearer ${sevallaToken}` },
+  const data = await request(`${API_URL}/applications/${appId}/deployments`, {
+    token,
+    method: 'POST',
+    body: {
+      branch: core.getInput('branch') || undefined,
+      docker_image: core.getInput('docker-image') || undefined,
+      is_restart: core.getBooleanInput('is-restart'),
+    },
   })
-  if (!resp.ok) {
-    core.info(`Failed to fetch deployment status (id: ${deploymentId}) - ${resp.status}; ${resp.statusText}`)
-    return pollStatus(appId, deploymentId, retry + 1)
-  }
-  const data = await resp.json()
-  const status = data?.status
-
-  core.info(`Deployment status: ${status}`)
-  if (['success', 'failed', 'cancelled', 'skipped'].includes(status)) {
-    if (status !== 'success') {
-      throw new Error(`Deployment failed: status is ${status}`)
-    }
-  } else {
-    return pollStatus(appId, deploymentId, retry + 1)
-  }
+  return data?.id
 }
 
-module.exports.deployApp = async () => {
-  const waitForFinish = core.getInput('wait-for-finish') !== 'false'
-  const appId = core.getInput('app-id')
+export const deployApp = async () => {
+  const token = core.getInput('sevalla-token')
+  const hookUrl = core.getInput('deploy-hook-url')
+  const waitForFinish = core.getBooleanInput('wait-for-finish')
+  if (hookUrl) core.setSecret(hookUrl)
+  const appId = core.getInput('app-id') || (hookUrl && appIdFromHook(hookUrl))
 
-  const deploymentId = await initDeployment()
-  if (deploymentId) {
-    core.setOutput('deployment-id', deploymentId)
-    core.info(`Deployment (id: ${deploymentId}) triggered successfully!`)
-  }
+  if (!hookUrl && (!token || !appId))
+    throw new Error('deploy-app requires sevalla-token and app-id, or deploy-hook-url')
+  if (waitForFinish && (!token || !appId)) throw new Error('wait-for-finish requires sevalla-token and app-id')
 
-  if (waitForFinish && deploymentId) {
-    if (!appId) {
-      core.warning('app-id is required for wait-for-finish when using deploy hooks. Skipping status polling.')
-      return
-    }
-    try {
-      await pollStatus(appId, deploymentId)
-    } catch (e) {
-      core.setFailed(e.message)
-    }
+  const deploymentId = await triggerDeployment(token, appId, hookUrl)
+  if (!deploymentId) {
+    if (waitForFinish) throw new Error('Deployment was triggered, but no deployment ID was returned to wait for')
+    core.info('Deployment triggered successfully!')
+    return
   }
+  core.setOutput('deployment-id', deploymentId)
+  core.info(`Deployment (id: ${deploymentId}) triggered successfully!`)
+
+  if (waitForFinish) await waitForDeployment(`/applications/${appId}/deployments/${deploymentId}`, token)
 }

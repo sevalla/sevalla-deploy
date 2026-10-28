@@ -1,6 +1,6 @@
 {
   "name": "sevalla-github-action",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "A GitHub Action to deploy and promote Sevalla apps and static sites.",
   "scripts": {
     "test": "node --test --experimental-test-coverage --test-coverage-lines=100 --test-coverage-include=\"src/**\" \"test/*.test.js\"",
